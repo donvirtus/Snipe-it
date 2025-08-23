@@ -78,4 +78,18 @@ Untuk meningkatkan keamanan, akses dapat dibatasi hanya untuk IP atau MAC addres
     1. Cek MAC address client: `arp -n` di server setelah ping dari client.
     2. Tambah rule iptables: `sudo iptables -A INPUT -p tcp -m mac --mac-source 00:14:22:01:23:45 -d 20.1.1.16 --dport 3306 -j ACCEPT`.
     3. Blok koneksi lain: `sudo iptables -A INPUT -p tcp --dport 3306 -j DROP`.
-  - **Keterbat
+  - **Keterbatasan**: Efektif hanya di LAN, dan MAC bisa spoofed, sehingga kurang aman dibanding IP.
+
+### Rekomendasi Keamanan Tambahan
+- Aktifkan SSL/TLS di MariaDB (edit `50-server.cnf` dengan `ssl-ca`, `ssl-cert`, `ssl-key`) untuk enkripsi.
+- Gunakan SSH tunnel di DBeaver untuk koneksi aman.
+- Pastikan firewall hanya mengizinkan port 3306 dari IP yang di-grant.
+
+## Catatan Tambahan
+- Perubahan privileges mungkin tidak langsung terlihat di sesi MariaDB yang sama; keluar dan login ulang diperlukan untuk refresh.
+- Pastikan jaringan antar 20.1.1.16 dan 30.1.1.7 lancar (ping atau telnet 20.1.1.16:3306).
+- Dokumentasi ini dibuat pada 08:42 PM WIB, 23 Agustus 2025.
+
+## Langkah Selanjutnya
+- Integrasi dengan script Python (setup_internusa_food.py) untuk pengelolaan data PT. Internusa Food.
+- Prediksi harga crypto akan dilanjutkan setelah tugas ini selesai.
