@@ -46,11 +46,36 @@ Pada tanggal 23 Agustus 2025, kami mengalami masalah saat mencoba mengakses data
 - Tambah grant remote untuk `snipeit_user` dengan `GRANT ... TO 'snipeit_user'@'%'` dan flush privileges.
 - Pastikan firewall (misal UFW) mengizinkan port 3306 (`sudo ufw allow 3306/tcp`).
 
-## Catatan Tambahan
-- Perubahan privileges mungkin tidak langsung terlihat di sesi MariaDB yang sama; keluar dan login ulang diperlukan untuk refresh.
-- Pastikan jaringan antar 20.1.1.16 dan 30.1.1.7 lancar (ping atau telnet 20.1.1.16:3306).
-- Dokumentasi ini dibuat pada 08:38 PM WIB, 23 Agustus 2025.
+## Pembatasan Akses ke IP atau MAC Address Tertentu
+Untuk meningkatkan keamanan, akses dapat dibatasi hanya untuk IP atau MAC address tertentu:
 
-## Langkah Selanjutnya
-- Integrasi dengan script Python (setup_internusa_food.py) untuk pengelolaan data PT. Internusa Food.
-- Prediksi harga crypto akan dilanjutkan setelah tugas ini selesai.
+### Membatasi Berdasarkan IP
+- MariaDB mendukung pembatasan berdasarkan IP di level user privileges.
+- **Langkah:**
+  1. Login ke MariaDB: `sudo mysql -u root -p`.
+  2. (Opsional) Hapus grant lama untuk '%':
+     ```
+     REVOKE ALL PRIVILEGES ON snipeit_db.* FROM 'snipeit_user'@'%';
+     DROP USER 'snipeit_user'@'%';
+     FLUSH PRIVILEGES;
+     ```
+  3. Tambah grant untuk IP spesifik (misal 30.1.1.7 dan 30.1.1.8):
+     ```
+     CREATE USER 'snipeit_user'@'30.1.1.7' IDENTIFIED BY 'password_kamu';
+     GRANT ALL PRIVILEGES ON snipeit_db.* TO 'snipeit_user'@'30.1.1.7';
+     CREATE USER 'snipeit_user'@'30.1.1.8' IDENTIFIED BY 'password_kamu';
+     GRANT ALL PRIVILEGES ON snipeit_db.* TO 'snipeit_user'@'30.1.1.8';
+     FLUSH PRIVILEGES;
+     ```
+     (Ganti 'password_kamu' dengan password asli.)
+  4. Verifikasi: `SHOW GRANTS FOR 'snipeit_user'@'30.1.1.7';`.
+  5. Test: Koneksi dari IP lain (misal 30.1.1.9) akan ditolak.
+- **Catatan**: Gunakan IP spesifik sesuai kebutuhan PT. Internusa Food untuk keamanan lebih baik daripada '%'.
+
+### Membatasi Berdasarkan MAC Address
+- MariaDB tidak langsung mendukung filter MAC, karena MAC hanya relevan di layer data link dan tidak terlihat di koneksi TCP/IP remote. Pendekatan ini memerlukan konfigurasi firewall:
+  - **Langkah:**
+    1. Cek MAC address client: `arp -n` di server setelah ping dari client.
+    2. Tambah rule iptables: `sudo iptables -A INPUT -p tcp -m mac --mac-source 00:14:22:01:23:45 -d 20.1.1.16 --dport 3306 -j ACCEPT`.
+    3. Blok koneksi lain: `sudo iptables -A INPUT -p tcp --dport 3306 -j DROP`.
+  - **Keterbat
